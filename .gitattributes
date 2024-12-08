@@ -1,4 +1,4 @@
 finetuned_model_weights/*.pt filter=lfs diff=lfs merge=lfs -text
 models/*.pth filter=lfs diff=lfs merge=lfs -text
 models/*.pkl filter=lfs diff=lfs merge=lfs -text
-output/penalty.mp4 filter=lfs diff=lfs merge=lfs -text
+penalty/*.mp4 filter=lfs diff=lfs merge=lfs -text
