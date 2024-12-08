@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul  3 18:14:55 2024
-
-@author: Raúl Vizcarra Chirinos
-"""
 
 import cv2
 import numpy as np
@@ -29,9 +23,8 @@ output_path = './output_video_trial4.mp4'
 tracks_path = '../track_stubs.pkl'
 classifier_path = '../hockey_team_classifier.pth'
 metadata_output_path  = '../metadata.json'
-pth_model = './hello.pth'
+pth_model = '../models/TPS-ResNet-BiLSTM-Attn.pth'
 
-#***************** Loads models and ice rink coordinates**********************#
 class_names = ['Referee', 'Tm_white', 'Tm_yellow',]
 
 class HockeyAnalyzer:
@@ -54,7 +47,6 @@ class HockeyAnalyzer:
             'Tm_yellow': {'distance': 0, 'speed': [], 'count': 0, 'offensive_pressure': 0}
         }
         
-#******************** Detect objects in each frame ***************************#
     def detect_frames(self, frames):
         batch_size = 20 
         detections = [] 
@@ -62,8 +54,7 @@ class HockeyAnalyzer:
             detections_batch = self.model.predict(frames[i:i+batch_size], conf=0.1)
             detections += detections_batch
         return detections
-    
-#*********************** Loads CNN Model**************************************#
+
 
     def load_classifier(self, classifier_path):
         model = CNNModel()
@@ -79,8 +70,6 @@ class HockeyAnalyzer:
             team = class_names[predicted_index]
         return team
 
-
-#*****************Pixel-based measurements to meters**************************#
     def pixel_to_meter_conversion(self):
         #Rink real dimensions in meters
         rink_width_m = 15
@@ -98,7 +87,6 @@ class HockeyAnalyzer:
     def convert_pixels_to_meters(self, distance_pixels):
         return distance_pixels / self.pixels_per_meter_x, distance_pixels / self.pixels_per_meter_y
     
-#**************** Speed: meters per second************************************#
 
     def calculate_speed(self, track_id, x_center, y_center, fps):
         current_position = (x_center, y_center)
@@ -112,7 +100,6 @@ class HockeyAnalyzer:
         self.previous_positions[track_id] = current_position
         return speed_meters_per_second
 
-#*********** Locate player's position in Offensive zones**********************#
 
     def is_inside_zone(self, position, zone):
           x, y = position
@@ -132,7 +119,7 @@ class HockeyAnalyzer:
           return inside
       
         
-#*******************************Performance metrics***************************#
+
     def draw_stats(self, frame):
          avg_speed_white = np.mean(self.team_stats['Tm_white']['speed']) if self.team_stats['Tm_white']['count'] > 0 else 0
          avg_speed_yellow = np.mean(self.team_stats['Tm_yellow']['speed']) if self.team_stats['Tm_yellow']['count'] > 0 else 0
@@ -191,7 +178,6 @@ class HockeyAnalyzer:
                          cv2.LINE_AA,
                      )       
           
-#********************* Track and update game stats****************************#
 
     def update_team_stats(self, team, speed, distance, position):
         if team in self.team_stats:
@@ -206,8 +192,6 @@ class HockeyAnalyzer:
                 if self.is_inside_zone(position, self.zone_yellow):
                     self.team_stats[team]['offensive_pressure'] += distance
 
-
-#********* Ellipse for tracking players instead of Bounding boxes*************#
     def draw_ellipse(self, frame, bbox, color, track_id=None, team=None):
         y2 = int(bbox[3])
         x_center = (int(bbox[0]) + int(bbox[2])) // 2
@@ -262,7 +246,6 @@ class HockeyAnalyzer:
 
         return frame
     
-#***************************Dashboard*****************************************#
     
     def draw_semi_transparent_rectangle(self, frame):
         overlay = frame.copy()
@@ -282,259 +265,7 @@ class HockeyAnalyzer:
         #Draw stats 
         self.draw_stats(frame)
  
-#******************* Loads Tracked Data (pickle file )************************#
 
-#     def analyze_video(self, video_path, output_path, tracks_path):
-#           with open(tracks_path, 'rb') as f:
-#               tracks = pickle.load(f)
-
-#           cap = cv2.VideoCapture(video_path)
-#           if not cap.isOpened():
-#               print("Error: Could not open video.")
-#               return
-          
-#           fps = cap.get(cv2.CAP_PROP_FPS)
-#           frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-#           frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-#           # Codec and VideoWriter object
-#           fourcc = cv2.VideoWriter_fourcc(*'XVID')
-#           out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-
-#           frame_num = 0
-#           while cap.isOpened():
-#               ret, frame = cap.read()
-#               if not ret:
-#                   break
-              
-
-#               mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-#               cv2.fillConvexPoly(mask, self.rink_coordinates, 1)
-#               mask = mask.astype(bool)
-#               # Draw rink area
-#               cv2.polylines(frame, [self.rink_coordinates], isClosed=True, color=(0, 255, 0), thickness=2)
-
-#               #Get tracks from frame
-#               player_dict = tracks["person"][frame_num]
-#               for track_id, player in player_dict.items():
-#                   bbox = player["bbox"]
-
-#               #Check if players are within the ice rink
-#                   x_center = int((bbox[0] + bbox[2]) / 2)
-#                   y_center = int((bbox[1] + bbox[3]) / 2)
-
-#                   if not mask[y_center, x_center]:
-#                       continue  
-
-# #***************************Team Prediction***********************************#
-#                   x1, y1, x2, y2 = map(int, bbox)
-#                   cropped_image = frame[y1:y2, x1:x2]
-#                   cropped_pil_image = Image.fromarray(cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB))
-#                   transformed_image = self.transform(cropped_pil_image).unsqueeze(0)
-#                   team = self.predict_team(transformed_image)
-
-# #************ Identify Teams, Players, assign labels**************************#
-#                   self.draw_ellipse(frame, bbox, (0, 255, 0), track_id, team)
-                  
-#                   font_scale = 1  
-#                   text_offset = -20  
-                  
-#                   #Identify Referee
-#                   if team == 'Referee':
-#                       rectangle_width = 60
-#                       rectangle_height = 25
-#                       x1_rect = x1
-#                       x2_rect = x1 + rectangle_width
-#                       y1_rect = y1 - 30
-#                       y2_rect = y1 - 5
-                  
-#                       cv2.rectangle(frame,
-#                                     (int(x1_rect), int(y1_rect)),
-#                                     (int(x2_rect), int(y2_rect)),
-#                                     (0, 0, 0),  
-#                                     cv2.FILLED)
-#                       text_color = (255, 255, 255)   
-#                   else:
-#                       if team == 'Tm_white':
-#                           text_color = (255, 215, 0)  # White  Team: Blue labels
-#                       else:
-#                           text_color = (0, 255, 255)  # Yellow Team: Yellow labels
-                  
-#               #Draw Team labels
-#                   cv2.putText(
-#                       frame,
-#                       team,
-#                       (int(x1), int(y1) + text_offset), 
-#                       cv2.FONT_HERSHEY_PLAIN,            
-#                       font_scale,
-#                       text_color,
-#                       thickness=2
-#                   )
-                  
-#                   speed = self.calculate_speed(track_id, x_center, y_center, fps)
-                  
-#               #Speed labels
-#                   speed_font_scale = 0.8  
-#                   speed_y_position = int(y1) + 20
-#                   if speed_y_position > int(y1) - 5:
-#                       speed_y_position = int(y1) - 5
-
-#                   cv2.putText(
-#                       frame,
-#                       f"Speed: {speed:.2f} m/s",  
-#                       (int(x1), speed_y_position),  
-#                       cv2.FONT_HERSHEY_PLAIN,       
-#                       speed_font_scale,
-#                       text_color,
-#                       thickness=2
-#                   )
-
-                
-#                #Draw dashboard
-#                   self.draw_semi_transparent_rectangle(frame)
-                  
-#                   distance = speed / fps
-#                   position = (x_center, y_center)
-#                   self.update_team_stats(team, speed, distance, position)
-                    
-#               #Process output video
-#               out.write(frame)
-#               frame_num += 1
-
-#           cap.release()
-#           out.release()
-
-#********************CNN -Model - Architecture********************************#
-
-    # def analyze_video(self, video_path, output_path, tracks_path, metadata_output_path):
-    #     with open(tracks_path, 'rb') as f:
-    #         tracks = pickle.load(f)
-
-    #     cap = cv2.VideoCapture(video_path)
-    #     if not cap.isOpened():
-    #         print("Error: Could not open video.")
-    #         return
-
-    #     fps = cap.get(cv2.CAP_PROP_FPS)
-    #     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    #     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    #     # Codec and VideoWriter object
-    #     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    #     out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
-
-    #     synthetic_metadata = {}  # To store metadata for all frames
-    #     frame_num = 0
-
-    #     while cap.isOpened():
-    #         ret, frame = cap.read()
-    #         if not ret:
-    #             break
-
-    #         mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-    #         cv2.fillConvexPoly(mask, self.rink_coordinates, 1)
-    #         mask = mask.astype(bool)
-
-    #         # Draw rink area
-    #         cv2.polylines(frame, [self.rink_coordinates], isClosed=True, color=(0, 255, 0), thickness=2)
-
-    #         # Get tracks for the current frame
-    #         player_dict = tracks["person"][frame_num]
-    #         frame_metadata = {}
-
-    #         for track_id, player in player_dict.items():
-    #             bbox = player["bbox"]
-
-    #             # Check if players are within the ice rink
-    #             x_center = int((bbox[0] + bbox[2]) / 2)
-    #             y_center = int((bbox[1] + bbox[3]) / 2)
-    #             if not mask[y_center, x_center]:
-    #                 continue
-
-    #             # Predict the team
-    #             x1, y1, x2, y2 = map(int, bbox)
-    #             cropped_image = frame[y1:y2, x1:x2]
-    #             cropped_pil_image = Image.fromarray(cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB))
-    #             transformed_image = self.transform(cropped_pil_image).unsqueeze(0)
-    #             team = self.predict_team(transformed_image)
-
-    #             # Get player name
-    #             player_name = self.get_player_name(track_id)
-
-    #             # Draw bounding ellipse and labels
-    #             self.draw_ellipse(frame, bbox, (0, 255, 0), track_id, team)
-    #             text_color = (255, 255, 255) if team == 'Referee' else (255, 215, 0) if team == 'Tm_white' else (0, 255, 255)
-
-    #             # Draw team label
-    #             cv2.putText(
-    #                 frame,
-    #                 team,
-    #                 (x1, y1 - 20),
-    #                 cv2.FONT_HERSHEY_PLAIN,
-    #                 1,
-    #                 text_color,
-    #                 thickness=2
-    #             )
-
-    #             # Draw player name
-    #             cv2.putText(
-    #                 frame,
-    #                 player_name,
-    #                 (x1, y1 - 40),
-    #                 cv2.FONT_HERSHEY_PLAIN,
-    #                 1,
-    #                 (255, 255, 255),
-    #                 thickness=2
-    #             )
-
-    #             # Calculate speed
-    #             speed = self.calculate_speed(track_id, x_center, y_center, fps)
-
-    #             # Add speed label
-    #             cv2.putText(
-    #                 frame,
-    #                 f"Speed: {speed:.2f} m/s",
-    #                 (x1, y1 + 20),
-    #                 cv2.FONT_HERSHEY_PLAIN,
-    #                 0.8,
-    #                 text_color,
-    #                 thickness=2
-    #             )
-
-    #             # Update team stats
-    #             distance = speed / fps
-    #             position = (x_center, y_center)
-    #             self.update_team_stats(team, speed, distance, position)
-
-    #             # Save metadata
-    #             frame_metadata[track_id] = {
-    #                 "name": player_name,
-    #                 "team": team,
-    #                 "speed": round(speed, 2),
-    #                 "distance": round(distance, 2)
-    #             }
-
-    #         # Draw the dashboard
-    #         self.draw_semi_transparent_rectangle(frame)
-
-    #         # Save metadata for the current frame
-    #         synthetic_metadata[frame_num] = frame_metadata
-
-    #         # Write processed frame to the output video
-    #         out.write(frame)
-    #         frame_num += 1
-
-    #     # Save synthetic metadata to a JSON file
-
-    #     with open(metadata_output_path, 'w') as meta_file:
-    #         json.dump(synthetic_metadata, meta_file, indent=4)
-
-    #     cap.release()
-    #     out.release()
-    #     print("Video analysis complete. Output saved to:", output_path)
-    #     print("Metadata saved to:", metadata_output_path)
-
-    # Supporting method for player names
     def analyze_video(self, video_path, output_path, tracks_path, metadata_output_path, pth_model):
         with open(tracks_path, 'rb') as f:
             tracks = pickle.load(f)
@@ -660,16 +391,12 @@ class HockeyAnalyzer:
         print("Video analysis complete. Output saved to:", output_path)
         print("Metadata saved to:", metadata_output_path)
     def get_player_name(self, track_id):
-        """
-        Returns the player's name for a given track ID.
-        Replace with your logic for fetching names (e.g., from a database or mapping).
-        """
+
         player_names = {
             1: "Alice",
             2: "Bob",
             3: "Charlie",
             4: "Diana",
-            # Add more mappings as needed
         }
         return player_names.get(track_id, "Unknown Player")
     def prepare_image(self, frame, bbox):
@@ -684,18 +411,7 @@ class HockeyAnalyzer:
         tensor_image = torch.tensor(gray_image, dtype=torch.float32).unsqueeze(0).unsqueeze(0) / 255.0
         return tensor_image
     def get_jersey_number(self, frame, bbox, pth_model):
-    # """
-    # Extracts and recognizes the jersey number from a given bounding box in the frame.
-    
-    # Args:
-    #     frame (ndarray): The video frame.
-    #     bbox (tuple): The bounding box coordinates (x1, y1, x2, y2).
-    #     pth_model (torch.nn.Module): The pre-trained model for jersey number recognition.
 
-    # Returns:
-    #     str: The detected jersey number.
-    # """
-    # Extract the region of interest (ROI)
         x1, y1, x2, y2 = map(int, bbox)
         cropped_image = frame[y1:y2, x1:x2]
 
@@ -725,11 +441,6 @@ class HockeyAnalyzer:
 
         # Switch to evaluation mode
         pth_model.eval()
-        # with torch.no_grad():
-        #     prediction = pth_model(transformed_image, dummy_text, is_train=False)
-        #     jersey_number = prediction.argmax(dim=1).item()
-
-        # return str(jersey_number)
         with torch.no_grad():
             visual_feature = pth_model.FeatureExtraction(transformed_image)
             contextual_feature = visual_feature.squeeze(3)  # Adjust shape as needed

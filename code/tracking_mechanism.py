@@ -1,27 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 26 20:44:30 2024
 
-@author: Raúl Vizcarra Chirinos
-"""
-
-#**********************************LIBRARIES*********************************#
 from ultralytics import YOLO
 import supervision as sv
 import pickle
 import os
 import cv2
 
-
-# INPUT-video file
 video_path = './video_input.mp4'
-# OUTPUT-Video File
 output_video_path = './output_video.mp4'
-
-# PICKLE FILE (IF ITS AVAILABLE LOADS IT, IF NOT, CREATES AND SAVES A NEW ONE IN THIS PATH)
 pickle_path = 'track_stubs.pkl'
 
-#*********************************TRACKING MECHANISM**************************#
+
 
 class HockeyAnalyzer:
     def __init__(self, model_path):
@@ -36,8 +24,6 @@ class HockeyAnalyzer:
             detections += detections_batch
         return detections
 
-
-#********LOAD TRACKS FROM FILE OR DETECT OBJECTS-SAVES PICKLE FILE************#
 
     def get_object_tracks(self, frames, read_from_stub=False, stub_path=None):
         if read_from_stub and stub_path is not None and os.path.exists(stub_path):
@@ -75,8 +61,6 @@ class HockeyAnalyzer:
                 pickle.dump(tracks, f)
 
         return tracks
-    
-#**** Design of Ellipse for tracking players instead of Bounding boxes********#
     
     def draw_ellipse(self, frame, bbox, color, track_id=None, team=None):
         y2 = int(bbox[3])
@@ -127,7 +111,6 @@ class HockeyAnalyzer:
 
         return frame
     
-#*********************** LABELS AND TRACK-IDs*********************************#
 
     def draw_annotations(self, video_frames, tracks):
         output_video_frames = []
@@ -135,11 +118,9 @@ class HockeyAnalyzer:
             frame = frame.copy() 
             player_dict = tracks["person"][frame_num]
 
-            # Draw Players
+            
             for track_id, player in player_dict.items():
                 bbox = player["bbox"]
-                
-                # Draw ellipse in each player and Labels
                 self.draw_ellipse(frame, bbox, (0, 255, 0), track_id)
             
                 x1, y1, x2, y2 = map(int, bbox)
@@ -148,9 +129,7 @@ class HockeyAnalyzer:
 
         return output_video_frames
     
-#*************** EXECUTES TRACKING MECHANISM AND OUTPUT VIDEO****************#
 
-# Read the video frames
 video_frames = []
 cap = cv2.VideoCapture(video_path)
 while cap.isOpened():
@@ -160,12 +139,10 @@ while cap.isOpened():
     video_frames.append(frame)
 cap.release()
 
-#********************* EXECUTE TRACKING METHOD WITH YOLO**********************#
 tracker = HockeyAnalyzer('./yolov8x.pt')
 tracks = tracker.get_object_tracks(video_frames, read_from_stub=False, stub_path=pickle_path)
 annotated_frames = tracker.draw_annotations(video_frames, tracks)
 
-#*********************** SAVES VIDEO FILE ************************************#
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 height, width, _ = annotated_frames[0].shape
 out = cv2.VideoWriter(output_video_path, fourcc, 30, (width, height))
@@ -173,12 +150,4 @@ out = cv2.VideoWriter(output_video_path, fourcc, 30, (width, height))
 for frame in annotated_frames:
     out.write(frame)
 out.release()
-
-#*****************************************************************************#
-
-#This method, takes in consideration some basic principles of the tracking 
-#method approach developed by Abdullah Tarek (@codeinajiffy)in his tutorial: 
-#"Build an AI/ML Football Analysis system with YOLO, OpenCV, and Python"
-#Tutorial: https://www.youtube.com/watch?v=neBZ6huolkg
-
 

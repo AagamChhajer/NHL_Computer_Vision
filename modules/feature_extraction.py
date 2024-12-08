@@ -3,7 +3,6 @@ import torch.nn.functional as F
 
 
 class VGG_FeatureExtractor(nn.Module):
-    """ FeatureExtractor of CRNN (https://arxiv.org/pdf/1507.05717.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(VGG_FeatureExtractor, self).__init__()
@@ -29,7 +28,6 @@ class VGG_FeatureExtractor(nn.Module):
 
 
 class RCNN_FeatureExtractor(nn.Module):
-    """ FeatureExtractor of GRCNN (https://papers.nips.cc/paper/6637-gated-recurrent-convolution-neural-network-for-ocr.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(RCNN_FeatureExtractor, self).__init__()
@@ -52,7 +50,6 @@ class RCNN_FeatureExtractor(nn.Module):
 
 
 class ResNet_FeatureExtractor(nn.Module):
-    """ FeatureExtractor of FAN (http://openaccess.thecvf.com/content_ICCV_2017/papers/Cheng_Focusing_Attention_Towards_ICCV_2017_paper.pdf) """
 
     def __init__(self, input_channel, output_channel=512):
         super(ResNet_FeatureExtractor, self).__init__()
@@ -79,9 +76,6 @@ class GRCL(nn.Module):
         self.GRCL = nn.Sequential(*self.GRCL)
 
     def forward(self, input):
-        """ The input of GRCL is consistant over time t, which is denoted by u(0)
-        thus wgf_u / wf_u is also consistant over time t.
-        """
         wgf_u = self.wgf_u(input)
         wf_u = self.wf_u(input)
         x = F.relu(self.BN_x_init(wf_u))
@@ -128,7 +122,6 @@ class BasicBlock(nn.Module):
         self.stride = stride
 
     def _conv3x3(self, in_planes, out_planes, stride=1):
-        "3x3 convolution with padding"
         return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                          padding=1, bias=False)
 

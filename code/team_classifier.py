@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 13 18:29:51 2024
-
-@author: Raúl Vizcarra Chirinos
-"""
-# ************CONVOLUTIONAL NEURAL NETWORK-THREE CLASSES DETECTION**************************
-# REFEREE
-# WHITE TEAM (white_away)
-# YELLOW TEAM (yellow_home)
 
 import os
 import torch
@@ -21,8 +11,6 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import matplotlib.pyplot as plt
 
 
-#******************************Data transformation********************************************
-# Training and Validation Datasets
 data_dir = './teams_sample_dataset/teams_sample_dataset'
 
 transform = transforms.Compose([
@@ -38,7 +26,6 @@ val_dataset = datasets.ImageFolder(os.path.join(data_dir, 'val'), transform=tran
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
-#********************************CNN Model Architecture**************************************
 class CNNModel(nn.Module):
     def __init__(self):
         super(CNNModel, self).__init__()
@@ -61,14 +48,12 @@ class CNNModel(nn.Module):
         return x
     
     
-#********************************CNN TRAINING**********************************************
 
 # Model-loss function-optimizer
 model = CNNModel()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-#*********************************Training*************************************************
 num_epochs = 10
 train_losses, val_losses = [], []
 
@@ -100,7 +85,7 @@ for epoch in range(num_epochs):
             all_labels.extend(labels.tolist())
             all_preds.extend(preds.tolist())
             
-#********************************METRICS & PERFORMANCE************************************
+
     
     val_losses.append(val_loss / len(val_loader))
     val_accuracy = accuracy_score(all_labels, all_preds)
@@ -116,7 +101,6 @@ for epoch in range(num_epochs):
           f"Val Recall: {val_recall:.4f}, "
           f"Val F1 Score: {val_f1:.4f}")
     
-#*******************************SHOW METRICS & PERFORMANCE**********************************
 plt.plot(train_losses, label='Train Loss')
 plt.plot(val_losses, label='Validation Loss')
 plt.legend()
@@ -126,7 +110,6 @@ plt.show()
 torch.save(model.state_dict(), './hockey_team_classifier.pth')
 
 
-# ********************TEST MODEL PREDICTIONS WITH SAMPLE DATASET***************************
 
 import os
 import torch
@@ -171,7 +154,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
 
-#******************ITERATION ON SAMPLE IMAGES-ACCURACY TEST*****************************
+
 
 class_names = ['team_referee', 'team_away', 'team_home']
 
