@@ -15,6 +15,11 @@ data_dir = './teams_sample_dataset/teams_sample_dataset'
 
 transform = transforms.Compose([
     transforms.Resize((150, 150)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.RandomRotation(15),
+    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+    transforms.RandomCrop((140,140)),
+    transforms.Resize((150,150)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ])
