@@ -2,7 +2,7 @@
 
 AI-powered computer vision system for hockey analysis. Automates player detection, puck tracking, and event recognition to enhance game understanding in real time.
 
----
+----------------------------------------------
 
 ## Features
 - **Player Detection:** Detect and classify players on the ice.
