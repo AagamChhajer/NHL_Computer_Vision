@@ -1,7 +1,6 @@
-﻿# NHL_Assignment_Submission
+# NHL_Assignment_Submission 🏒  
 
-## Introduction
-This project aims to develop a set of computer vision and machine learning tasks to analyze and enhance the experience of watching hockey games.It Automates key processes such as player detection, puck tracking, and event recognition, saving time for analysts and coaches. It could benefit the consumers by Providing actionable insights, highlighting key moments, and improving the understanding of game dynamics in real-time.
+AI-powered computer vision system for hockey analysis. Automates player detection, puck tracking, and event recognition to enhance game understanding in real time.
 
 ---
 
